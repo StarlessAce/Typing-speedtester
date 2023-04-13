@@ -43,24 +43,49 @@ LIST = ['baby',
 'jar',
 'amusement',
 'ground']
+LIST = ['baby',
+'front',
+'statement',
+'horrible',
+'bedroom']
 
-results = [random.choice(LIST), random.choice(LIST), random.choice(LIST)]
+time_start = 0
+time_diff = 0
+results = [random.choice(LIST), random.choice(LIST)]
 
 list = [word for word in LIST if word not in results]
-CORRECT_ANSWERES = []
+CORRECT_ANSWERS = []
+end_of_list = 0
 
 
-# def start_timer():
-#     t = 10
-#     while t:
-#         mins, secs = divmod(t, 60)
-#         timer = '{:02d}:{:02d}'.format(mins, secs)
-#         print(timer, end='\r')
-#         time.sleep(1)
-#         t -= 1
+def start_timer(event=None):
+    global time_start
+    time_start = time.time()
+
+
+def stop_timer(event=None):
+    global time_diff
+    time_stop = time.time()
+    time_diff = time_start - time_stop
+    print('tutej')
+
+
+def game_finish():
+    text_area.config(state=NORMAL)
+    text_area.delete(1.0, 3.0)
+    text_area.insert(INSERT, 'KONIEC')
+    text_area.tag_add('current_word', 1.0, 3.0)
+    text_area.config(state=DISABLED)
+
+    print('tutejs')
+
 def show_results(results):
     text_area.config(state=NORMAL)
     text_area.delete(1.0, END)
+    if len(results) == 3:
+        pass
+    else:
+        results.insert(0, '')
     for words in results:
         text_area.insert(INSERT, words + '\n')
 
@@ -75,7 +100,7 @@ def check_word():
     word = word.strip()
     if word == results[0]:
         text_area.tag_add('correct_answer', 1.0, 2.0)
-        CORRECT_ANSWERES.append(word)
+        CORRECT_ANSWERS.append(word)
     else:
         text_area.tag_add('incorrect_answer', 1.0, 2.0)
 
@@ -92,9 +117,13 @@ def erease_text_area(event=None):
 
 
 def refresh_words(event):
-    # print(event)
-    # start_timer()
-    choice = random.choice(list)
+    global end_of_list
+
+    try:
+        choice = random.choice(list)
+    except IndexError:
+        choice = ''
+
     if len(results) == 3:
         results.remove(results[0])
     results.append(choice)
@@ -102,7 +131,15 @@ def refresh_words(event):
     show_results(results)
     check_word()
     erease_text_area(event)
-    list.remove(choice)
+    try:
+        list.remove(choice)
+    except ValueError:
+        end_of_list += 1
+
+    if end_of_list == 2:
+        stop_timer()
+        game_finish()
+
 
 window = Tk()
 
@@ -123,7 +160,7 @@ time_label = Label(main_frame, text='Time: ')
 time_label.pack(anchor='e', pady=10, padx=5)
 
 text_area = Text(main_frame, font=('Arial', 14), bg='white', width=20, height=4, padx=10, pady=20, wrap=WORD)
-text_area.tag_configure(tagName='current_word', justify='center', font=('Arial', 20))
+text_area.tag_configure(tagName='current_word', justify='center', font=('Arial', 22))
 text_area.tag_configure(tagName='side_words', justify='center', font=('Arial', 12))
 text_area.tag_configure(tagName="correct_answer", justify='center', font=('Arial', 12), foreground='green')
 text_area.tag_configure(tagName="incorrect_answer", justify='center', font=('Arial', 12), foreground='red')
@@ -142,10 +179,10 @@ input_area.pack(pady=5)
 # input_area.place(width=180, height=60, anchor='center')
 run = 10
 start = time.time()
-while time.time() - start < run:
-    input_area.bind('<space>', refresh_words)
-    print(time.time() - start)
-    pass
+
+input_area.bind('<Return>', refresh_words)
+input_area.bind('<space>', refresh_words)
+input_area.bind('<FocusIn>', start_timer)
 
 window.mainloop()
 
