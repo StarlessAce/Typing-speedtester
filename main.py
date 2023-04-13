@@ -1,5 +1,5 @@
 from tkinter import *
-from tkinter.ttk import *
+# from tkinter.ttk import *
 import time
 import random
 
@@ -49,13 +49,29 @@ LIST = ['baby',
 'horrible',
 'bedroom']
 
+
 time_start = 0
 time_diff = 0
-results = [random.choice(LIST), random.choice(LIST)]
+first_random = random.choice(LIST)
+second_random = random.choice(LIST)
+while first_random == second_random:
+    second_random = random.choice(LIST)
+results = [first_random, second_random]
+
 
 list = [word for word in LIST if word not in results]
+game_list = []
 CORRECT_ANSWERS = []
 end_of_list = 0
+
+
+def game_length():
+    length = words_number.get()
+    for word in range(0, length-1):
+        x = random.choice(list)
+        while x not in game_list:
+            game_list.append(x)
+    print(game_list)
 
 
 def start_timer(event=None):
@@ -67,7 +83,13 @@ def stop_timer(event=None):
     global time_diff
     time_stop = time.time()
     time_diff = time_start - time_stop
-    print('tutej')
+
+
+def game_start():
+    text_area.config(state=NORMAL)
+    text_area.insert(3.0, "PRESS 'START' TO BEGIN")
+    text_area.tag_add('current_word', 1.0, 3.0)
+    text_area.config(state=DISABLED)
 
 
 def game_finish():
@@ -77,9 +99,8 @@ def game_finish():
     text_area.tag_add('current_word', 1.0, 3.0)
     text_area.config(state=DISABLED)
 
-    print('tutejs')
 
-def show_results(results):
+def show_results():
     text_area.config(state=NORMAL)
     text_area.delete(1.0, END)
     if len(results) == 3:
@@ -120,7 +141,7 @@ def refresh_words(event):
     global end_of_list
 
     try:
-        choice = random.choice(list)
+        choice = random.choice(game_list)
     except IndexError:
         choice = ''
 
@@ -128,11 +149,11 @@ def refresh_words(event):
         results.remove(results[0])
     results.append(choice)
 
-    show_results(results)
+    show_results()
     check_word()
     erease_text_area(event)
     try:
-        list.remove(choice)
+        game_list.remove(choice)
     except ValueError:
         end_of_list += 1
 
@@ -150,22 +171,34 @@ window.geometry('%dx%d' % (WIDTH, HEIGHT))
 
 # creating layout
 text_var = StringVar()
+words_number = IntVar()
 
-main_frame = Frame(window)
-main_frame.pack()
+settings_frame = Frame(window)
+settings_frame.pack()
 
-main_title = Label(main_frame, text='Typing speed test', font=('Arial', 16))
-main_title.pack(pady=(50,0))
-time_label = Label(main_frame, text='Time: ')
-time_label.pack(anchor='e', pady=10, padx=5)
+game_frame = Frame(window)
+game_frame.pack()
 
-text_area = Text(main_frame, font=('Arial', 14), bg='white', width=20, height=4, padx=10, pady=20, wrap=WORD)
+
+main_title = Label(settings_frame, text='Typing speed test', font=('Arial', 16))
+main_title.pack(pady=(50,10))
+# time_label = Label(main_frame, text='Time: ')
+# time_label.pack(anchor='e', pady=10, padx=5)
+
+words_number_label = Label(settings_frame, text='Choose number of words to type:')
+words_number_label.pack(pady=1, anchor='w')
+
+words_number_picker = Scale(settings_frame, variable=words_number, from_=1, to=len(LIST), orient='horizontal', state='normal', length=240)
+words_number_picker.pack(pady=1, anchor='center')
+
+text_area = Text(game_frame, font=('Arial', 14), bg='white', width=20, height=4, padx=10, pady=20, wrap=WORD)
 text_area.tag_configure(tagName='current_word', justify='center', font=('Arial', 22))
 text_area.tag_configure(tagName='side_words', justify='center', font=('Arial', 12))
 text_area.tag_configure(tagName="correct_answer", justify='center', font=('Arial', 12), foreground='green')
 text_area.tag_configure(tagName="incorrect_answer", justify='center', font=('Arial', 12), foreground='red')
 
-show_results(results)
+# show_results(results)
+game_start()
 
 text_area.tag_add('side_words', 1.0, 2.0)
 text_area.tag_add('current_word', 2.0, 3.0)
@@ -174,8 +207,17 @@ text_area.tag_add('side_words', 3.0, 4.0)
 text_area.config(state=DISABLED)
 text_area.pack(pady=10, anchor='s')
 
-input_area = Entry(main_frame, font=('Arial', 14), width=20, textvariable=text_var, justify=CENTER)
+entry_label = Label(game_frame, text='Type the words below:')
+entry_label.pack(pady=1, anchor='w')
+
+input_area = Entry(game_frame, font=('Arial', 14), width=20, textvariable=text_var, justify=CENTER)
 input_area.pack(pady=5)
+
+words_number_button = Button(game_frame, text='Start', width=33, height=3, command=lambda: [game_length(), show_results()])
+words_number_button.pack(pady=(20,20), anchor='center')
+
+print(results)
+
 # input_area.place(width=180, height=60, anchor='center')
 run = 10
 start = time.time()
