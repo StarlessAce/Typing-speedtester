@@ -145,6 +145,7 @@ start = time.time()
 while time.time() - start < run:
     input_area.bind('<space>', refresh_words)
     print(time.time() - start)
+    pass
 
 window.mainloop()
 
