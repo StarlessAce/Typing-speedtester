@@ -43,11 +43,6 @@ LIST = ['baby',
 'jar',
 'amusement',
 'ground']
-LIST = ['baby',
-'front',
-'statement',
-'horrible',
-'bedroom']
 
 
 time_start = 0
@@ -67,11 +62,10 @@ end_of_list = 0
 
 def game_length():
     length = words_number.get()
-    for word in range(0, length-1):
+    for word in range(0, length-2):
         x = random.choice(list)
         while x not in game_list:
             game_list.append(x)
-    print(game_list)
 
 
 def start_timer(event=None):
@@ -80,9 +74,20 @@ def start_timer(event=None):
 
 
 def stop_timer(event=None):
-    global time_diff
+    global time_diff, GAME_STARTED
     time_stop = time.time()
-    time_diff = time_start - time_stop
+    time_diff = time_stop - time_start
+    return time_diff
+
+
+def update_results(time):
+
+    wpm = len(CORRECT_ANSWERS)
+    cpm = sum(len(word) for word in CORRECT_ANSWERS)
+
+    time_result_label.config(text='%.2f' % time)
+    wpm_result_label.config(text=wpm)
+    cpm_result_label.config(text=str(cpm))
 
 
 def game_start():
@@ -99,8 +104,14 @@ def game_finish():
     text_area.tag_add('current_word', 1.0, 3.0)
     text_area.config(state=DISABLED)
 
+    input_area.config(state=DISABLED)
+    print(CORRECT_ANSWERS)
 
-def show_results():
+    time_result = stop_timer()
+    update_results(time_result)
+
+
+def show_words():
     text_area.config(state=NORMAL)
     text_area.delete(1.0, END)
     if len(results) == 3:
@@ -126,10 +137,6 @@ def check_word():
         text_area.tag_add('incorrect_answer', 1.0, 2.0)
 
 
-def key_press(event):
-    key = event.char
-
-
 def erease_text_area(event=None):
     input_area.delete(0, 'end')
     # position = input_area.index(INSERT)
@@ -149,25 +156,26 @@ def refresh_words(event):
         results.remove(results[0])
     results.append(choice)
 
-    show_results()
+    show_words()
     check_word()
     erease_text_area(event)
+
     try:
         game_list.remove(choice)
     except ValueError:
         end_of_list += 1
 
     if end_of_list == 2:
-        stop_timer()
         game_finish()
 
 
 window = Tk()
 
-WIDTH = int(window.winfo_screenwidth()/2)
-HEIGHT = int(window.winfo_screenheight()/2)
+WIDTH = int(window.winfo_screenwidth()/3)
+HEIGHT = int(window.winfo_screenheight()/1.5)
 
 window.geometry('%dx%d' % (WIDTH, HEIGHT))
+window.config(pady=50)
 
 # creating layout
 text_var = StringVar()
@@ -188,7 +196,7 @@ main_title.pack(pady=(50,10))
 words_number_label = Label(settings_frame, text='Choose number of words to type:')
 words_number_label.pack(pady=1, anchor='w')
 
-words_number_picker = Scale(settings_frame, variable=words_number, from_=1, to=len(LIST), orient='horizontal', state='normal', length=240)
+words_number_picker = Scale(settings_frame, variable=words_number, from_=3, to=len(LIST), orient='horizontal', state='normal', length=240)
 words_number_picker.pack(pady=1, anchor='center')
 
 text_area = Text(game_frame, font=('Arial', 14), bg='white', width=20, height=4, padx=10, pady=20, wrap=WORD)
@@ -210,21 +218,37 @@ text_area.pack(pady=10, anchor='s')
 entry_label = Label(game_frame, text='Type the words below:')
 entry_label.pack(pady=1, anchor='w')
 
-input_area = Entry(game_frame, font=('Arial', 14), width=20, textvariable=text_var, justify=CENTER)
+input_area = Entry(game_frame, font=('Arial', 14), width=20, textvariable=text_var, justify=CENTER, state=DISABLED)
 input_area.pack(pady=5)
 
-words_number_button = Button(game_frame, text='Start', width=33, height=3, command=lambda: [game_length(), show_results()])
+words_number_button = Button(game_frame, text='Start', width=33, height=3, command=lambda: [game_length(), show_words(), input_area.config(state=NORMAL)])
 words_number_button.pack(pady=(20,20), anchor='center')
 
-print(results)
+results_frame = Frame(game_frame)
+results_frame.pack(anchor='w')
+
+time_label = Label(results_frame, text='Your time:')
+time_label.grid(row=0, column=0, pady=4, sticky='w')
+time_result_label = Label(results_frame, text='')
+time_result_label.grid(row=0, column=1, pady=4, sticky='w')
+
+wpm_label = Label(results_frame, text='Your WPM result:')
+wpm_label.grid(row=1, column=0, pady=4, sticky='w')
+wpm_result_label = Label(results_frame, text='')
+wpm_result_label.grid(row=1, column=1, pady=4, sticky='w')
+
+cpm_label = Label(results_frame, text='Your CPM result:')
+cpm_label.grid(row=2, column=0, pady=4, sticky='w')
+cpm_result_label = Label(results_frame, text='')
+cpm_result_label.grid(row=2, column=1, pady=4, sticky='w')
 
 # input_area.place(width=180, height=60, anchor='center')
 run = 10
 start = time.time()
 
+input_area.bind('<FocusIn>', start_timer)
 input_area.bind('<Return>', refresh_words)
 input_area.bind('<space>', refresh_words)
-input_area.bind('<FocusIn>', start_timer)
 
 window.mainloop()
 
