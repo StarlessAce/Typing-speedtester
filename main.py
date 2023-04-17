@@ -81,13 +81,16 @@ def stop_timer(event=None):
 
 
 def update_results(time):
+    print(CORRECT_ANSWERS)
+    words_count = len(CORRECT_ANSWERS)
+    chars_count = sum(len(word) for word in CORRECT_ANSWERS)
 
-    wpm = len(CORRECT_ANSWERS)
-    cpm = sum(len(word) for word in CORRECT_ANSWERS)
+    wpm = words_count*60/time
+    cpm = chars_count*60/time
 
-    time_result_label.config(text='%.2f' % time)
-    wpm_result_label.config(text=wpm)
-    cpm_result_label.config(text=str(cpm))
+    time_result_label.config(text='%.2f' % time + 's')
+    wpm_result_label.config(text='%.2f' % wpm)
+    cpm_result_label.config(text=str('%.2f' % cpm))
 
 
 def game_start():
@@ -100,16 +103,31 @@ def game_start():
 def game_finish():
     text_area.config(state=NORMAL)
     text_area.delete(1.0, 3.0)
-    text_area.insert(INSERT, 'KONIEC')
+    text_area.insert(INSERT, 'FINISH')
     text_area.tag_add('current_word', 1.0, 3.0)
     text_area.config(state=DISABLED)
 
     input_area.config(state=DISABLED)
-    print(CORRECT_ANSWERS)
+    words_number_button.config(state=NORMAL, text='Play again')
 
     time_result = stop_timer()
     update_results(time_result)
+    reset_game()
 
+
+def reset_game():
+    global results, list, game_list, CORRECT_ANSWERS, end_of_list, time_start, time_diff, first_random, second_random
+
+    first_random = random.choice(LIST)
+    second_random = random.choice(LIST)
+    while first_random == second_random:
+        second_random = random.choice(LIST)
+    results = [first_random, second_random]
+    list = [word for word in LIST if word not in results]
+    game_list = []
+    CORRECT_ANSWERS = []
+    end_of_list = 0
+    time_start = 0
 
 def show_words():
     text_area.config(state=NORMAL)
@@ -137,7 +155,7 @@ def check_word():
         text_area.tag_add('incorrect_answer', 1.0, 2.0)
 
 
-def erease_text_area(event=None):
+def erase_text_area(event=None):
     input_area.delete(0, 'end')
     # position = input_area.index(INSERT)
     # input_area.icursor(3)
@@ -158,7 +176,7 @@ def refresh_words(event):
 
     show_words()
     check_word()
-    erease_text_area(event)
+    erase_text_area(event)
 
     try:
         game_list.remove(choice)
@@ -221,7 +239,7 @@ entry_label.pack(pady=1, anchor='w')
 input_area = Entry(game_frame, font=('Arial', 14), width=20, textvariable=text_var, justify=CENTER, state=DISABLED)
 input_area.pack(pady=5)
 
-words_number_button = Button(game_frame, text='Start', width=33, height=3, command=lambda: [game_length(), show_words(), input_area.config(state=NORMAL)])
+words_number_button = Button(game_frame, text='Start', width=33, height=3, command=lambda: [game_length(), show_words(), input_area.config(state=NORMAL), words_number_button.config(state=DISABLED, text='Play!'), start_timer(), input_area.focus_set()])
 words_number_button.pack(pady=(20,20), anchor='center')
 
 results_frame = Frame(game_frame)
@@ -243,8 +261,6 @@ cpm_result_label = Label(results_frame, text='')
 cpm_result_label.grid(row=2, column=1, pady=4, sticky='w')
 
 # input_area.place(width=180, height=60, anchor='center')
-run = 10
-start = time.time()
 
 input_area.bind('<FocusIn>', start_timer)
 input_area.bind('<Return>', refresh_words)
